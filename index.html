@@ -1,118 +1,149 @@
+
 <!DOCTYPE html>
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AVVA Building — QR Code</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AVVA — QR Generator</title>
 <style>
+* { box-sizing: border-box; }
 body {
   margin: 0;
   min-height: 100vh;
-  background: #F4F0E8;
+  background: #f4f0e8;
   font-family: Arial, sans-serif;
   display: flex;
-  justify-content: center;
   align-items: center;
-  text-align: center;
+  justify-content: center;
+  padding: 25px;
 }
 .card {
+  width: 100%;
+  max-width: 440px;
   background: #12284a;
   color: white;
-  padding: 40px 30px;
+  padding: 32px;
   border-radius: 20px;
-  width: 340px;
-  max-width: 85%;
+  text-align: center;
 }
-h1 { letter-spacing: 3px; }
-.preview {
-  background: #12284a;
-  padding: 25px;
-  margin: 25px auto;
-  display: flex;
-  justify-content: center;
+h1 { letter-spacing: 2px; }
+select, button {
+  width: 100%;
+  padding: 15px;
+  border-radius: 9px;
+  font-size: 16px;
+  margin-top: 15px;
 }
+select { background: white; }
 button {
   background: white;
   color: #12284a;
   border: none;
-  padding: 15px 25px;
-  border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
 }
+#preview {
+  display: flex;
+  justify-content: center;
+  margin: 25px auto;
+}
+#site { overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>AVVA BUILDING</h1>
-  <p>QR-код офіційного сайту</p>
-  <div class="preview">
+  <h1>AVVA</h1>
+  <p>Генератор QR-кодів</p>
+
+  <select id="choice" onchange="generate()">
+    <option value="building">AVVA Building</option>
+    <option value="construct">AVVA Construct</option>
+  </select>
+
+  <div id="preview">
     <div id="qrcode"></div>
   </div>
+
+  <p id="site"></p>
   <button onclick="downloadPNG()">
-    Завантажити PNG
+    Завантажити білий QR (PNG)
   </button>
-  <p>www.avvabuilding.com</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const qr = document.getElementById("qrcode");
+const sites = {
+  building: "https://www.avvabuilding.com/",
+  construct: "https://www.avvaconstruct.com/"
+};
 
-new QRCode(qr, {
-  text: "https://www.avvabuilding.com/",
-  width: 260,
-  height: 260,
-  colorDark: "#ffffff",
-  colorLight: "#12284a",
-  correctLevel: QRCode.CorrectLevel.H
-});
+function generate() {
+  const key = document.getElementById("choice").value;
+  const container = document.getElementById("qrcode");
+  container.innerHTML = "";
+
+  new QRCode(container, {
+    text: sites[key],
+    width: 260,
+    height: 260,
+    colorDark: "#ffffff",
+    colorLight: "#12284a",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  document.getElementById("site").textContent = sites[key];
+}
 
 function downloadPNG() {
-  const source = qr.querySelector("canvas");
+  const key = document.getElementById("choice").value;
+  const source = document.querySelector("#qrcode canvas");
+
   if (!source) {
     alert("QR-код ще завантажується");
     return;
   }
 
+  const size = 2000;
   const output = document.createElement("canvas");
-  output.width = 2000;
-  output.height = 2000;
+  output.width = size;
+  output.height = size;
 
   const ctx = output.getContext("2d");
   ctx.imageSmoothingEnabled = false;
 
-  // Робимо темно-сині пікселі прозорими
   const temp = document.createElement("canvas");
   temp.width = source.width;
   temp.height = source.height;
   const tctx = temp.getContext("2d");
   tctx.drawImage(source, 0, 0);
 
-  const image = tctx.getImageData(
+  const data = tctx.getImageData(
     0, 0, temp.width, temp.height
   );
 
-  for (let i = 0; i < image.data.length; i += 4) {
-    const r = image.data[i];
-    const g = image.data[i + 1];
-    const b = image.data[i + 2];
+  for (let i = 0; i < data.data.length; i += 4) {
+    const r = data.data[i];
+    const g = data.data[i + 1];
+    const b = data.data[i + 2];
 
+    // Темно-синій фон стає прозорим.
     if (r < 100 && g < 120 && b < 160) {
-      image.data[i + 3] = 0;
+      data.data[i + 3] = 0;
     }
   }
 
-  tctx.putImageData(image, 0, 0);
+  tctx.putImageData(data, 0, 0);
+
+  // Залишаємо прозорі поля навколо QR.
   ctx.drawImage(temp, 100, 100, 1800, 1800);
 
   const link = document.createElement("a");
-  link.download = "AVVA-WHITE-QR.png";
+  link.download = "AVVA-" + key + "-WHITE-QR.png";
   link.href = output.toDataURL("image/png");
   link.click();
 }
+
+generate();
 </script>
 </body>
 </html>
-
-  
