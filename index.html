@@ -1,59 +1,118 @@
-
 <!DOCTYPE html>
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AVVA QR Code</title>
+<title>AVVA Building — QR Code</title>
 <style>
 body {
+  margin: 0;
+  min-height: 100vh;
+  background: #F4F0E8;
   font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  background: #f4f0e8;
-  padding: 40px;
-  color: #12284a;
 }
-button {
+.card {
   background: #12284a;
   color: white;
-  border: 0;
-  border-radius: 8px;
-  padding: 14px 22px;
-  cursor: pointer;
+  padding: 40px 30px;
+  border-radius: 20px;
+  width: 340px;
+  max-width: 85%;
 }
-#qrcode {
+h1 { letter-spacing: 3px; }
+.preview {
+  background: #12284a;
+  padding: 25px;
   margin: 25px auto;
   display: flex;
   justify-content: center;
 }
+button {
+  background: white;
+  color: #12284a;
+  border: none;
+  padding: 15px 25px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
-<h1>AVVA BUILDING</h1>
-<p>QR-код офіційного сайту</p>
-<div id="qrcode"></div>
-<button onclick="downloadPNG()">Завантажити PNG</button>
+<div class="card">
+  <h1>AVVA BUILDING</h1>
+  <p>QR-код офіційного сайту</p>
+  <div class="preview">
+    <div id="qrcode"></div>
+  </div>
+  <button onclick="downloadPNG()">
+    Завантажити PNG
+  </button>
+  <p>www.avvabuilding.com</p>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-new QRCode(document.getElementById("qrcode"), {
+const qr = document.getElementById("qrcode");
+
+new QRCode(qr, {
   text: "https://www.avvabuilding.com/",
-  width: 300,
-  height: 300,
-  colorDark: "#12284a",
-  colorLight: "#ffffff",
+  width: 260,
+  height: 260,
+  colorDark: "#ffffff",
+  colorLight: "#12284a",
   correctLevel: QRCode.CorrectLevel.H
 });
 
 function downloadPNG() {
-  const canvas = document.querySelector("#qrcode canvas");
-  const img = document.querySelector("#qrcode img");
-  const a = document.createElement("a");
-  a.download = "AVVA-QR.png";
-  a.href = canvas ? canvas.toDataURL("image/png") : img.src;
-  a.click();
+  const source = qr.querySelector("canvas");
+  if (!source) {
+    alert("QR-код ще завантажується");
+    return;
+  }
+
+  const output = document.createElement("canvas");
+  output.width = 2000;
+  output.height = 2000;
+
+  const ctx = output.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  // Робимо темно-сині пікселі прозорими
+  const temp = document.createElement("canvas");
+  temp.width = source.width;
+  temp.height = source.height;
+  const tctx = temp.getContext("2d");
+  tctx.drawImage(source, 0, 0);
+
+  const image = tctx.getImageData(
+    0, 0, temp.width, temp.height
+  );
+
+  for (let i = 0; i < image.data.length; i += 4) {
+    const r = image.data[i];
+    const g = image.data[i + 1];
+    const b = image.data[i + 2];
+
+    if (r < 100 && g < 120 && b < 160) {
+      image.data[i + 3] = 0;
+    }
+  }
+
+  tctx.putImageData(image, 0, 0);
+  ctx.drawImage(temp, 100, 100, 1800, 1800);
+
+  const link = document.createElement("a");
+  link.download = "AVVA-WHITE-QR.png";
+  link.href = output.toDataURL("image/png");
+  link.click();
 }
 </script>
 </body>
 </html>
+
   
